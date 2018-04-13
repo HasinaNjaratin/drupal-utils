@@ -18,14 +18,14 @@
  * @return array
  * 
  */
-function _drupal_get_node_full_data($entity, $entity_reference_term=null, $entity_reference_node=null, $field_collection=null){
+function _drupal_get_entity_full_data($entity, $entity_reference_term=null, $entity_reference_node=null, $field_collection=null){
   $full = [];
   if (is_object($entity)) {
     $data = (array) $entity;
-    $full = [
-      'nid' => $data['nid'],
-      'title' => $data['title'],
-    ];
+    if(isset($data['nid'])){
+      $full['nid'] = $data['nid'];
+      $full['title'] = $data['title'];
+    }
     foreach ($data as $field_name => $field_value) {
       if ((strpos($field_name, 'field_') !== false) && empty($field_value)) {
         foreach ($field_value[LANGUAGE_NONE] as $key => $value) {
@@ -66,12 +66,7 @@ function _drupal_get_node_full_data($entity, $entity_reference_term=null, $entit
           
             // ---- DEFAULT VALUE
             default:
-              /* field collection */
-              if(!is_null($field_collection) && in_array($field_name, $field_collection)){
-                $g_val = _drupal_get_field_collection_value(key($value));
-              }else{
-                $g_val = $value[key($value)];
-              }
+              $g_val = (!is_null($field_collection) && in_array($field_name, $field_collection)) ? _drupal_get_field_collection_value(array($value[key($value)])) : $value[key($value)];
               break;
           }
           if(count($field_value[LANGUAGE_NONE]) > 1){ 
@@ -90,13 +85,18 @@ function _drupal_get_node_full_data($entity, $entity_reference_term=null, $entit
  * Get data from field collection
  *
  * @param $fc_id
- *  id of the field collection
+ *  array id(s) of the field collection
  *
  * @return array
  * 
  */
-function _drupal_get_field_collection_value($fc_id){
-  return [];
+function _drupal_get_field_collection_value($fc_id, $entity_reference_term=null, $entity_reference_node=null){
+  $data = [];
+  $field_collections = entity_load('field_collection_item', $fc_id);
+  foreach($field_collections as $id => $field_collection){
+    $data[] = _drupal_get_entity_full_data($field_collection, $entity_reference_term, $entity_reference_node);
+  }
+  return $data;
 }
 
 ?>
