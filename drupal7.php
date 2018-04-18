@@ -125,4 +125,55 @@ function _drupal_get_fields_value($nid, $fields=[]){
   return $results ? $results[0] : [];
 }
 
+/**
+ * Function to get existing entity from specific field
+ *
+ * @param $entity_type
+ *  type of the entity {node, taxonomy_term, user}
+ *
+ * @param $bundle
+ *  entity bundle name
+ *
+ * @param $fields
+ *  [field_name => ['value' => field_value, 'type' => field_type, 'op' => op]]
+ *
+ * @param $base_field
+ *  array containing the base field of the entity
+ *
+ * @param $force_all_result (bool)
+ *  get all result if several
+ *
+ * @return entity id
+ */
+function _drupal_get_entity_by_field($entity_type, $bundle = FALSE, $fields, $base_field, $force_all_result = TRUE) {
+  $query = $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', $entity_type);
+  if($bundle){
+    $query->entityCondition('bundle', array($bundle));
+  }
+  $execute_query = FALSE;
+  foreach ($fields as $field_name => $field) {
+    if($field['value']){
+      $execute_query = TRUE;
+      if (in_array($field_name, $base_field)) {
+        $query->propertyCondition($field_name, $field['value']);
+      } else {
+        if($field['op'] == 'like'){
+          $query->fieldCondition($field_name, $field['type'], '%' . db_like($field['value']) . '%', 'like');
+        }else {
+          $query->fieldCondition($field_name, $field['type'], $field['value'], $field['op']);
+        }
+      }
+    }
+  }
+  $result = $execute_query ? $query->execute() : [];
+  if(empty($result)){ return NULL;}
+
+  $result = array_keys($result[$entity_type]);
+  if(!$force_all_result){
+    return $result[0];
+  }
+  return sizeof($result) == 1 ? $result[0]  : $result;
+}
+
 ?>
