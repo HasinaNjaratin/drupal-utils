@@ -102,3 +102,19 @@ function _drupal_get_url_by_fid($fid){
   $result = $query->execute()->fetchAll();
   return !empty($result) ? file_create_url($result[0]->uri) : '';
 }
+
+/**
+ *  Get tid by name
+ *  
+ *  @param $name (string)
+ *  term name
+ *  
+ *  @param $force_all_result (bool)
+ *   
+ *  @param $vocabulary_name (str)
+ *  
+ *  @return array/int (tid)
+ */
+function _drupal_get_tid_by_name($name, $force_all_result = TRUE, $vocabulary_name = FALSE){
+  return _drupal_get_entity_by_field('taxonomy_term', $vocabulary_name, ['name' => ['value' => $name]], ['name'], $force_all_result);
+}
