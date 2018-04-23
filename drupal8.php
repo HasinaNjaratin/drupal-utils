@@ -86,3 +86,19 @@ function _drupal_get_entity_by_field($entity_type, $bundle = FALSE, $fields, $ba
   }
   return sizeof($result) == 1 ? $result[0]  : $result;
 }
+
+/**
+ *  Get url by fid
+ * 
+ *  @param $fid (int)
+ *  create url
+ *
+ * @return url
+ */
+function _drupal_get_url_by_fid($fid){
+  $query = \Drupal::database()->select('file_managed', 'f');
+  $query->addField('f', 'uri');
+  $query->condition('f.fid', $fid);
+  $result = $query->execute()->fetchAll();
+  return !empty($result) ? file_create_url($result[0]->uri) : '';
+}
