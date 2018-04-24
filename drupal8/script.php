@@ -77,3 +77,28 @@ function _drupal_is_value_in_node_field($nid, $field, $value, $type = 'value'){
   $record = $query->execute()->fetchCol();
   return $record ? TRUE : FALSE;
 }
+
+/**
+ *  Get http request (Webservices)
+ * 
+ *  @param $url (string)
+ * 
+ *  @param $auth (array) ['username' => '', 'password' => '']
+ *  
+ *  @return data
+ */
+function _drupal_get_data_webservice($url, $auth = FALSE){
+  $client = \Drupal::httpClient();
+  try {
+    if($auth){
+      $response = $client->get($url, [
+        'auth' => [$auth['username'], $auth['password']]
+      ]);
+    }else{
+      $response = $client->get($url);
+    }
+    return ($response->getStatusCode() == 200) ? $response->getBody()->getContents() : FALSE;
+  }
+  catch (RequestException $e) {}
+  return FALSE;
+}

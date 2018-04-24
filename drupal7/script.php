@@ -77,3 +77,15 @@ function _drupal_is_value_in_node_field($nid, $field, $value, $type = 'value'){
   $record = $query->execute()->fetchCol();
   return $record ? TRUE : FALSE;
 }
+
+/**
+ *  Get http request (Webservices)
+ * 
+ *  @param $url (string)
+ *  
+ *  @return data
+ */
+function _drupal_get_data_webservice($url){
+  $response = drupal_http_request($url);
+  return $response->data;
+}
