@@ -57,7 +57,7 @@ function _simplify_string($str, $separator = '-'){
  * @param type $ftpbasedir
  * @param type $ftpath
  */
-function ftp_mksubdirs($ftpcon, $ftpbasedir, $ftpath) {
+function _ftp_mksubdirs($ftpcon, $ftpbasedir, $ftpath) {
   $success = FALSE;
 
   @ftp_chdir($ftpcon, $ftpbasedir); 
@@ -74,4 +74,22 @@ function ftp_mksubdirs($ftpcon, $ftpbasedir, $ftpath) {
   }
 
   return $success;
+}
+
+/**
+ * Copy file from directory to another on the same ftp server
+ * @param type $ftpcon
+ * @param type $src  :: source path
+ * @param type $dest :: destination path
+ * 
+ * @param boolean 
+ */
+function _ftp_copy($ftpcon, $src, $dest){
+  if(ftp_rename($ftpcon, $src, $dest)) {
+    echo "SOURCE :: " . $src . PHP_EOL . "DESTINATION :: " . $dest;
+    echo PHP_EOL;
+    echo "ARCHIVE OK" . PHP_EOL;
+    return true;
+  }
+  return false;
 }

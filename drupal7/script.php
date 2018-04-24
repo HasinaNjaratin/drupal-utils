@@ -35,10 +35,8 @@ function _ftp_manipulating(){
         if(ftp_get($conn_id, $local_file, $remote_file, FTP_BINARY)){
           // manage file => return file object
           $file_saved = system_retrieve_file($local_file, NULL, TRUE, FILE_EXISTS_REPLACE);
-          // create directory on the server
+          // upload file to archive directory on the server
           $dest = '/archives/' . $file;
-          ftp_mksubdirs($conn_id, $config['remote_directory'], '/archives/');
-          // write/archive to server
           $cp = ftp_put($conn_id, $dest, $local_file, FTP_BINARY);
           // delete old file
           $del = ftp_delete($conn_id, $remote_file);
