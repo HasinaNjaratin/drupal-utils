@@ -49,3 +49,29 @@ function _simplify_string($str, $separator = '-'){
   }
   return strtolower($str);
 }
+
+/**
+ * Create subdir FTP eg. ftp_mksubdirs($ftpcon, '/', '/archive/2018/02'); it will create sub directories {archive, 2018,02}
+ * 
+ * @param type $ftpcon
+ * @param type $ftpbasedir
+ * @param type $ftpath
+ */
+function ftp_mksubdirs($ftpcon, $ftpbasedir, $ftpath) {
+  $success = FALSE;
+
+  @ftp_chdir($ftpcon, $ftpbasedir); 
+  $parts = explode('/', $ftpath);
+  foreach ($parts as $part) {
+    if (!@ftp_chdir($ftpcon, $part)) {
+      $dir = ftp_mkdir($ftpcon, $part);
+      $ch = ftp_chdir($ftpcon, $part);
+      ftp_chmod($ftpcon, 0777, $part);
+      if ($dir != FALSE OR $ch) {
+        $success = TRUE;
+      }
+    }
+  }
+
+  return $success;
+}
