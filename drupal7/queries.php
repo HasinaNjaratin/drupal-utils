@@ -102,7 +102,10 @@ function _drupal_get_field_collection_value($fc_id, $entity_reference_term=null,
 /**
  * Get fields value without entity load
  * 
- * @param $nid
+ * @param $entity_type
+ * {node,user}
+ * 
+ * @param $entity_id
  * 
  * @param $fields
  * array field_name -> {value, target_id, fid}
