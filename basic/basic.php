@@ -93,3 +93,23 @@ function _ftp_copy($ftpcon, $src, $dest){
   }
   return false;
 }
+
+/**
+ * Get closest value from array
+ * 
+ * @param type $search
+ * @param type $arr
+ * 
+ * @param value
+ */
+function _getClosest($search, $arr) {
+  if(count($arr)==0){return 0;}
+  $search =0;
+  $closest = null;
+  foreach ($arr as $item) {
+      if ($closest === null || abs($search - $closest) > abs($item - $search)) {
+          $closest = $item;
+      }
+  }
+  return array_search(abs($closest), $arr) ? abs($closest) : $closest;
+}
