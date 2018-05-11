@@ -109,18 +109,36 @@ function _drupal_get_field_collection_value($fc_id, $entity_reference_term=null,
  *
  * @return obj
  */
-function _drupal_get_fields_value($nid, $fields=[]){
-  $query = db_select('node', 'n');
-  $query->addField('n', 'nid');
-  $query->addField('n', 'type');
-  $query->addField('n', 'title');
+function _drupal_get_fields_value($entity_type, $entity_id, $fields=[]){
+  switch ($entity_type) {
+    case 'node':
+      $i = 'nid';
+      $query = db_select('node', 'e');
+      $query->addField('e', 'nid');
+      $query->addField('e', 'type');
+      $query->addField('e', 'title');
+      $query->addField('e', 'status');
+      break;
+    case 'user':
+      $i = 'uid';
+      $query = db_select('users', 'e');
+      $query->addField('e', 'uid');
+      $query->addField('e', 'mail');
+      $query->addField('e', 'name');
+      $query->addField('e', 'status');
+      break;
+    default:
+      return [];
+      break;
+  }
+
   if(!empty($fields)){
     foreach ($fields as $field_name => $type) {
       $query->addField($field_name, $field_name . '_' . $type);
-      $query->addJoin('left', 'field_data_' . $field_name, $field_name, $field_name.'.entity_id = n.nid');
+      $query->addJoin('left', 'field_data_' . $field_name, $field_name, $field_name.'.entity_id = e.' . $i);
     }
   }
-  $query->condition('n.nid', $nid);
+  $query->condition('e.' . $i, $entity_id);
   $results = $query->execute()->fetchAll();
   return $results ? $results[0] : [];
 }
