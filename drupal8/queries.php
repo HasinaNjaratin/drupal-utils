@@ -3,25 +3,48 @@
 /**
  * Get fields value without entity load
  * 
- * @param $nid
+ * @param $entity_type
+ * {node,user}
+ * 
+ * @param $entity_id
  * 
  * @param $fields
  * array field_name -> {value, target_id, fid}
  *
  * @return obj
  */
-function _drupal_get_fields_value($nid, $fields=[]){
-  $query = \Drupal::database()->select('node_field_data', 'n');
-  $query->addField('n', 'nid');
-  $query->addField('n', 'type');
-  $query->addField('n', 'title');
-  if(!empty($fields)){
-      foreach ($fields as $field_name => $type) {
-          $query->addField($field_name, $field_name.'_'.$type);
-          $query->addJoin('left', 'node__'.$field_name, $field_name, $field_name.'.entity_id = n.nid');
-      }
+function _drupal_get_fields_value($entity_type, $entity_id, $fields=[]){
+  switch ($entity_type) {
+    case 'node':
+      $p = 'node__';
+      $i = 'nid';
+      $query = \Drupal::database()->select('node_field_data', 'e');
+      $query->addField('e', 'nid');
+      $query->addField('e', 'type');
+      $query->addField('e', 'title');
+      $query->addField('e', 'status');
+      break;
+    case 'user':
+      $p = 'user__';
+      $i = 'uid';
+      $query = \Drupal::database()->select('users_field_data', 'e');
+      $query->addField('e', 'uid');
+      $query->addField('e', 'mail');
+      $query->addField('e', 'name');
+      $query->addField('e', 'status');
+      break;
+    default:
+      return [];
+      break;
   }
-  $query->condition('n.nid', $nid);
+
+  if(!empty($fields)){
+    foreach ($fields as $field_name => $type) {
+      $query->addField($field_name, $field_name.'_'.$type);
+      $query->addJoin('left', $p.$field_name, $field_name, $field_name.'.entity_id = e.'.$i);
+    }
+  }
+  $query->condition('e.'.$i, $entity_id);
   $results = $query->execute()->fetchAll();
   return $results ? $results[0] : [];
 }
