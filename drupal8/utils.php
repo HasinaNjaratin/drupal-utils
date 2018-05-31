@@ -137,3 +137,68 @@ function _drupal_create_entity($entity_type, $bundle, $value = []){
     return $entity->id();  
   } catch(Exception $e) {}
 }
+
+/**
+ *  Script to update entity element
+ * 
+ *  @param $entity_type (node, user, taxonomy_term)
+ * 
+ *  @param $bundle type
+ * 
+ *  @param $id (int) entity id
+ * 
+ *  @param $data array [fieldname => fieldvalue]
+ *  
+ *  @return id
+ */
+function _drupal_update_entity($entity_type, $bundle, $id, $data){
+  // load entity
+  switch($entity_type){
+    case 'node':
+      $entity = \Drupal\node\Entity\Node::load($id);
+      $keyLog = $data['title'];
+      break;
+    case 'taxonomy_term':
+      $entity = \Drupal\taxonomy\Entity\Term::load($id);
+      $keyLog = $data['name'];
+      break;
+    case 'user':
+      $entity =  \Drupal\user\Entity\User::load($id);
+      $keyLog = $data['name'];
+      break;
+    default:
+      break;
+  }
+  // Prepare data
+  foreach ($data as $field_name => $field_value) {
+    if(!$field_value && ($field_name != 'status')){
+      $entity->set($field_name, NULL);
+    }else{
+      $field_settings = _drupal_get_field_data_value_type($entity_type, $field_name, $bundle);
+      $field_type = $field_settings['type'];
+      if($field_settings['multiple_value'] && is_array($field_value)){
+        // Current values
+        $current_values = [];
+        foreach ($entity->get($field_name)->getValue() as $key => $value) {
+          $current_values[] = $value[$field_type];
+        }
+        // New values
+        foreach ($field_value as $item_value) {
+          if(!in_array($item_value,$current_values)){
+            $current_values[] = [$field_type => $item_value];
+          }
+        }
+        // Set value
+        $field_value = $current_values;
+        $entity->set($field_name, $field_value);
+      }else{
+        $entity->set($field_name, $field_value);
+      }
+    }
+  }
+  // Save
+  try {
+    $entity->save();
+    return $entity->id();
+  } catch(Exception $e) {}
+}
