@@ -50,3 +50,59 @@ function _drupal_get_data_webservice($url, $auth = FALSE){
   catch (RequestException $e) {}
   return FALSE;
 }
+
+/**
+ *  Script to create entity element
+ * 
+ *  @param $entity_type (node, user, taxonomy_term)
+ * 
+ *  @param $bundle type
+ * 
+ *  @param $value array [fieldname => fieldvalue]
+ *  
+ *  @return id
+ */
+function _drupal_create_entity($entity_type, $bundle, $value = []){
+  $entity = [];
+  // Prepare data
+  foreach($value as $field_name => $field_value){
+    if($field_value || ($field_name == 'status')){
+      $field_settings = _kbc_get_field_data_value_type($entity_type, $field_name, $bundle);
+      $field_type = $field_settings['type'];
+      if(in_array($field_name,['name','title','mail','roles', 'status'])){
+        $entity[$field_name] = $field_value;
+      }elseif($field_settings['multiple_value'] && is_array($field_value)){
+        $field_values = [];
+        foreach ($field_value as $item_value) {
+          $field_values[] = [$field_type => $item_value];
+        }
+        $entity[$field_name] = $field_values;
+      }else{
+        $entity[$field_name][$field_type] = $field_value;
+      }
+    }
+  }
+  // Create entity
+  try {
+    switch($entity_type){
+      case 'node':
+        $entity['type'] = $bundle;
+        $entity['langcode'] = \Drupal::languageManager()->getCurrentLanguage()->getId();
+        $entity = \Drupal\node\Entity\Node::create($entity);
+        break;
+      case 'taxonomy_term':
+        $entity['vid'] = $bundle;
+        $entity = \Drupal\taxonomy\Entity\Term::create($entity);
+        $entity->enforceIsNew();
+        break;
+      case 'user':
+        $entity =  \Drupal\user\Entity\User::create($entity);
+        break;
+      default:
+        $keyLog = '';
+        break;
+    }
+    $entity->save();
+    return $entity->id();  
+  } catch(Exception $e) {}
+}
