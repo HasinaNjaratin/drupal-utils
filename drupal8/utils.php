@@ -52,6 +52,37 @@ function _drupal_get_data_webservice($url, $auth = FALSE){
 }
 
 /**
+* Function to get the data_type value of the field
+*
+* @param $entity_type
+*  type of the entity
+*
+* @param $bundle_name
+*  entity bundle name
+*
+* @param $field_name
+*  name of the field to get the data types
+*
+* @return $field_type
+*/
+function _drupal_get_field_data_value_type($entity_type, $field_name, $bundle_name) {
+  $field_type = "value";
+  $field_isMultiple = FALSE;
+  if(!empty(\Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $field_name))) { 
+    $settings = \Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $field_name)->getSettings();
+    $field_isMultiple = \Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $field_name)->isMultiple();
+    $settings_target_type = isset($settings['target_type']) ? $settings['target_type'] : '';
+    if(in_array($settings_target_type, ['node','user','taxonomy_term'])){
+      $field_type = "target_id";
+    }
+  } 
+  return [
+    'type' => $field_type,
+    'multiple_value' => $field_isMultiple
+  ];
+}
+
+/**
  *  Script to create entity element
  * 
  *  @param $entity_type (node, user, taxonomy_term)
@@ -67,7 +98,7 @@ function _drupal_create_entity($entity_type, $bundle, $value = []){
   // Prepare data
   foreach($value as $field_name => $field_value){
     if($field_value || ($field_name == 'status')){
-      $field_settings = _kbc_get_field_data_value_type($entity_type, $field_name, $bundle);
+      $field_settings = _drupal_get_field_data_value_type($entity_type, $field_name, $bundle);
       $field_type = $field_settings['type'];
       if(in_array($field_name,['name','title','mail','roles', 'status'])){
         $entity[$field_name] = $field_value;
