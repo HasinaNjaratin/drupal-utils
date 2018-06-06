@@ -115,7 +115,13 @@ function _drupal_create_entity($entity_type, $bundle, $value = []){
         }else{
           $field_settings = _drupal_get_field_data_value_type($entity_type, $field_name, $bundle);
           $field_type = $field_settings['type'];
-          $entity->{$field_name}[LANGUAGE_NONE][][$field_type] = $field_value;
+          if($field_settings['multiple_value'] && is_array($field_value)){
+            foreach ($field_value as $value) {
+              $entity->{$field_name}[LANGUAGE_NONE][][$field_type] = $value;
+            }
+          }else{
+            $entity->{$field_name}[LANGUAGE_NONE][][$field_type] = $field_value;
+          }
         }
       }
     }
@@ -140,5 +146,43 @@ function _drupal_create_entity($entity_type, $bundle, $value = []){
  *  @return id
  */
 function _drupal_update_entity($entity_type, $bundle, $id, $data){
+  $entity = false;
+  // load entity
+  switch($entity_type){
+    case 'node':
+      $entity = node_load($id);
+      break;
+    case 'taxonomy_term':
+      $entity = taxonomy_term_load($id);
+      break;
+    case 'user':
+      $entity = user_load($id);
+      break;
+    default:
+      return false;
+      break;
+  }
+  if(!$entity){return false;}
 
+  // Prepare data
+  foreach ($data as $field_name => $field_value) {
+    if(in_array($field_name,['name','title','mail','roles', 'status'])){
+      $entity->{$field_name} = $field_value;
+    }else{
+      $field_settings = _drupal_get_field_data_value_type($entity_type, $field_name, $bundle);
+      $field_type = $field_settings['type'];
+      if($field_settings['multiple_value'] && is_array($field_value)){
+        foreach ($field_value as $value) {
+          $entity->{$field_name}[LANGUAGE_NONE][][$field_type] = $value;
+        }
+      }else{
+        $entity->{$field_name}[LANGUAGE_NONE][][$field_type] = $field_value;
+      }
+    }
+  }
+  // Save
+  try {
+    $entity->save();
+    return $entity->id();
+  } catch(Exception $e) {}
 }
