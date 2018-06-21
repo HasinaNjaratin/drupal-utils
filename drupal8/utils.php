@@ -66,18 +66,18 @@ function _drupal_get_data_webservice($url, $auth = FALSE){
 * @return $field_type
 */
 function _drupal_get_field_data_value_type($entity_type, $field_name, $bundle_name) {
-  $field_type = "value";
+  $field_type = "string";
+  $field_target_type = "value";
   $field_isMultiple = FALSE;
   if(!empty(\Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $field_name))) { 
-    $settings = \Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $field_name)->getSettings();
-    $field_isMultiple = \Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $field_name)->isMultiple();
-    $settings_target_type = isset($settings['target_type']) ? $settings['target_type'] : '';
-    if(in_array($settings_target_type, ['node','user','taxonomy_term'])){
-      $field_type = "target_id";
-    }
+    $settings = \Drupal\field\Entity\FieldStorageConfig::loadByName($entity_type, $field_name);
+    $field_isMultiple = $settings->get('cardinality') == -1 ? TRUE : FALSE;
+    $field_type = $settings->get('type');
+    $field_target_type = ($field_type == 'entity_reference') ? 'target_id' : 'value';
   } 
   return [
     'type' => $field_type,
+    'target_type' => $field_type,
     'multiple_value' => $field_isMultiple
   ];
 }
@@ -99,17 +99,17 @@ function _drupal_create_entity($entity_type, $bundle, $value = []){
   foreach($value as $field_name => $field_value){
     if($field_value || ($field_name == 'status')){
       $field_settings = _drupal_get_field_data_value_type($entity_type, $field_name, $bundle);
-      $field_type = $field_settings['type'];
+      $field_target_type = $field_settings['target_type'];
       if(in_array($field_name,['name','title','mail','roles', 'status'])){
         $entity[$field_name] = $field_value;
       }elseif($field_settings['multiple_value'] && is_array($field_value)){
         $field_values = [];
         foreach ($field_value as $item_value) {
-          $field_values[] = [$field_type => $item_value];
+          $field_values[] = [$field_target_type => $item_value];
         }
         $entity[$field_name] = $field_values;
       }else{
-        $entity[$field_name][$field_type] = $field_value;
+        $entity[$field_name][$field_target_type] = $field_value;
       }
     }
   }
@@ -175,17 +175,17 @@ function _drupal_update_entity($entity_type, $bundle, $id, $data){
       $entity->set($field_name, NULL);
     }else{
       $field_settings = _drupal_get_field_data_value_type($entity_type, $field_name, $bundle);
-      $field_type = $field_settings['type'];
+      $field_target_type = $field_settings['target_type'];
       if($field_settings['multiple_value'] && is_array($field_value)){
         // Current values
         $current_values = [];
         foreach ($entity->get($field_name)->getValue() as $key => $value) {
-          $current_values[] = $value[$field_type];
+          $current_values[] = $value[$field_target_type];
         }
         // New values
         foreach ($field_value as $item_value) {
           if(!in_array($item_value,$current_values)){
-            $current_values[] = [$field_type => $item_value];
+            $current_values[] = [$field_target_type => $item_value];
           }
         }
         // Set value
